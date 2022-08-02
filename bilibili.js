@@ -124,6 +124,7 @@ color: #00a1d6;
             linkEl.target = "_blank";
             linkEl.href = videoInfo.base_url;
             linkEl.innerText = "type :" + videoInfo.mime_type + "[" + videoInfo.width + "x" + videoInfo.height + "]";
+            linkEl.title = videoInfo.codecs
             videoContainerEl.appendChild(linkEl);
         }
         dialogEl.appendChild(videoContainerEl);
@@ -141,6 +142,7 @@ color: #00a1d6;
             linkEl.target = "_blank";
             linkEl.href = audioInfo.base_url;
             linkEl.innerText = "type :" + audioInfo.mime_type;
+            linkEl.title = audioInfo.codecs
             audioContainerEl.appendChild(linkEl);
         }
         dialogEl.appendChild(audioContainerEl);
