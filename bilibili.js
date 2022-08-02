@@ -83,7 +83,6 @@ color: #00a1d6;
     background-color: #ff85ad;
 }`;
         let styleEl = document.createElement("style");
-        styleEl.type = "text/css";
         styleEl.innerHTML = cssContent;
         document.getElementsByTagName("head").item(0).appendChild(styleEl);
     }
@@ -96,8 +95,10 @@ color: #00a1d6;
         return dialogEl;
     }
 
-    function showMediaDialog(videoList, audioList) {
+    function showMediaDialog(dashInfo) {
         //
+        let videoList = dashInfo.video;
+        let audioList = dashInfo.audio;
         console.log(videoList);
         console.log(audioList);
         let modalList = document.getElementsByClassName("modal-main");
@@ -153,19 +154,30 @@ color: #00a1d6;
         dialogEl.appendChild(closeEl);
     }
 
-    function onMediaInfoLoaded(jsonContent) {
+    function onMediaInfoLoaded(jsonContent, videoType) {
         let mediaInfo = JSON.parse(jsonContent);
-        showMediaDialog(mediaInfo.result.dash.video, mediaInfo.result.dash.audio);
+        if (videoType === 1) {
+            showMediaDialog(mediaInfo.result.dash);
+        } else if (videoType === 2) {
+            showMediaDialog(mediaInfo.data.dash);
+        }
     }
 
     addXMLRequestCallback(function (xhr) {
         xhr.addEventListener("load", function () {
             if (xhr.readyState == 4 && xhr.status == 200) {
                 if (xhr.responseURL.indexOf('/pgc/player/web/playurl') !== -1) {
-                    onMediaInfoLoaded(xhr.response);
+                    onMediaInfoLoaded(xhr.response, 1);
+                } else if (xhr.responseURL.indexOf("/x/player/playurl") !== -1) {
+                    onMediaInfoLoaded(xhr.response, 2);
                 }
             }
         });
     });
-
+    document.addEventListener('DOMContentLoaded', function () {
+        if ("__playinfo__" in window) {
+            let dashInfo = window.__playinfo__.data.dash;
+            showMediaDialog(dashInfo)
+        }
+    });
 })();
