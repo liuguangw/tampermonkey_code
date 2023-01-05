@@ -12,6 +12,11 @@
 
 (function () {
     'use strict';
+    let playInfo = {
+        video: [],
+        audio: [],
+        useBackupUrl: false
+    };
 
     function addXMLRequestCallback(callback) {
         let oldSend, i;
@@ -65,7 +70,7 @@
  .modal-main a.audio-node:hover{
 color: #00a1d6;
 }
-.modal-main .close-btn{
+.modal-main .btn{
     position: relative;
     font-size: 12px;
     display: inline-block;
@@ -79,8 +84,12 @@ color: #00a1d6;
     box-shadow: 0 6px 10px 0 rgba(251,114,153,.4);
     margin-top: 5px;
 }
-.modal-main .close-btn:hover{
+.modal-main .btn:hover{
     background-color: #ff85ad;
+}
+.modal-main .addr-btn {
+    margin-left: 5px;
+    background: #e77999;
 }`;
         let styleEl = document.createElement("style");
         styleEl.innerHTML = cssContent;
@@ -95,10 +104,11 @@ color: #00a1d6;
         return dialogEl;
     }
 
-    function showMediaDialog(dashInfo) {
+    function showMediaDialog() {
         //
-        let videoList = dashInfo.video;
-        let audioList = dashInfo.audio;
+        let videoList = playInfo.video;
+        let audioList = playInfo.audio;
+        let useBackupUrl = playInfo.useBackupUrl;
         console.log(videoList);
         console.log(audioList);
         let modalList = document.getElementsByClassName("modal-main");
@@ -122,7 +132,7 @@ color: #00a1d6;
             let linkEl = document.createElement("a");
             linkEl.className = "video-node";
             linkEl.target = "_blank";
-            linkEl.href = videoInfo.base_url;
+            linkEl.href = useBackupUrl ? videoInfo.backupUrl[0] : videoInfo.base_url;
             linkEl.innerText = "type :" + videoInfo.mime_type + "[" + videoInfo.width + "x" + videoInfo.height + "]";
             linkEl.title = videoInfo.codecs
             videoContainerEl.appendChild(linkEl);
@@ -140,7 +150,7 @@ color: #00a1d6;
             let linkEl = document.createElement("a");
             linkEl.className = "audio-node";
             linkEl.target = "_blank";
-            linkEl.href = audioInfo.base_url;
+            linkEl.href = useBackupUrl ? audioInfo.backupUrl[0] : audioInfo.base_url;
             linkEl.innerText = "type :" + audioInfo.mime_type;
             linkEl.title = audioInfo.codecs
             audioContainerEl.appendChild(linkEl);
@@ -148,30 +158,40 @@ color: #00a1d6;
         dialogEl.appendChild(audioContainerEl);
         //关闭按钮
         let closeEl = document.createElement("a");
-        closeEl.className = "close-btn";
+        closeEl.className = "btn close-btn";
         closeEl.innerText = "关闭";
         closeEl.addEventListener("click", function () {
             dialogEl.style.display = "none";
         });
         dialogEl.appendChild(closeEl);
+        //切换地址
+        let addrBtnEl = document.createElement("a");
+        addrBtnEl.className = "btn addr-btn";
+        addrBtnEl.innerText = useBackupUrl ? "备用地址" : "默认地址";
+        addrBtnEl.addEventListener("click", function () {
+            playInfo.useBackupUrl = !playInfo.useBackupUrl;
+            showMediaDialog();
+        });
+        dialogEl.appendChild(addrBtnEl);
+
     }
 
-    function onMediaInfoLoaded(jsonContent, videoType) {
-        let mediaInfo = JSON.parse(jsonContent);
-        if (videoType === 1) {
-            showMediaDialog(mediaInfo.result.dash);
-        } else if (videoType === 2) {
-            showMediaDialog(mediaInfo.data.dash);
-        }
+    function onDashInfoLoaded(dashInfo) {
+        playInfo.video = dashInfo.video;
+        playInfo.audio = dashInfo.audio;
+        showMediaDialog();
     }
 
     addXMLRequestCallback(function (xhr) {
         xhr.addEventListener("load", function () {
             if (xhr.readyState == 4 && xhr.status == 200) {
+                let mediaInfo = JSON.parse(xhr.response);
                 if (xhr.responseURL.indexOf('/pgc/player/web/playurl') !== -1) {
-                    onMediaInfoLoaded(xhr.response, 1);
+                    onDashInfoLoaded(mediaInfo.result.dash);
                 } else if (xhr.responseURL.indexOf("/x/player/playurl") !== -1) {
-                    onMediaInfoLoaded(xhr.response, 2);
+                    onDashInfoLoaded(mediaInfo.data.dash);
+                } else if (xhr.responseURL.indexOf("/x/player/wbi/playurl") !== -1) {
+                    onDashInfoLoaded(mediaInfo.data.dash);
                 }
             }
         });
@@ -179,7 +199,7 @@ color: #00a1d6;
     document.addEventListener('DOMContentLoaded', function () {
         if ("__playinfo__" in window) {
             let dashInfo = window.__playinfo__.data.dash;
-            showMediaDialog(dashInfo)
+            onDashInfoLoaded(dashInfo);
         }
     });
 })();
