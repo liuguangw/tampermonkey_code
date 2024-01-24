@@ -185,12 +185,17 @@ color: #00a1d6;
     addXMLRequestCallback(function (xhr) {
         xhr.addEventListener("load", function () {
             if (xhr.readyState == 4 && xhr.status == 200) {
-                let mediaInfo = JSON.parse(xhr.response);
-                if (xhr.responseURL.indexOf('/pgc/player/web/playurl') !== -1) {
-                    onDashInfoLoaded(mediaInfo.result.dash);
+                if (xhr.responseURL.indexOf('/pgc/player/web/v2/playurl') !== -1) {
+                    //console.log(xhr);
+                    let mediaInfo = JSON.parse(xhr.response);
+                    onDashInfoLoaded(mediaInfo.result.video_info.dash);
                 } else if (xhr.responseURL.indexOf("/x/player/playurl") !== -1) {
+                    //console.log(xhr);
+                    let mediaInfo = JSON.parse(xhr.response);
                     onDashInfoLoaded(mediaInfo.data.dash);
                 } else if (xhr.responseURL.indexOf("/x/player/wbi/playurl") !== -1) {
+                    //console.log(xhr);
+                    let mediaInfo = JSON.parse(xhr.response);
                     onDashInfoLoaded(mediaInfo.data.dash);
                 }
             }
